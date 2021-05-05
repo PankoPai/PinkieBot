@@ -2,7 +2,7 @@
   "name": "pinkiebot",
   "version": "1.0.0",
   "description": "Pony bot that likes to party",
-  "main": "pinkie.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
