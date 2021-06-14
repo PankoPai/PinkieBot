@@ -1,6 +1,7 @@
 // require the discord.js module
 const fs = require('fs')
 const Discord = require('discord.js');
+const fetch = require('node-fetch');
 const {prefix, token} = require('./config.json');
 
 // create a new Discord client
@@ -32,8 +33,23 @@ for (const file of commandFiles) {
     }
 }
 
+//client.channels = new Discord.collection
+
+/* const channelFiles = fs.readdirSync(`./channels/${file}`).filter(file => file.endsWith('.js'));
+for (const file of channelFiles){
+    const channel = require(`./commands/${folder}/${file}`);
+} */
+
+ /* client.messages = new Discord.Collection();
+
+const messageFiles = fs.readdirSync(`./commands/messages/${file}`).filter(file => file.endsWith('.js'));
+for (const file of messageFiles) {
+    const message = require(`./commands/messages/${file}`);
+    client.messages.set(message.content, message);
+} */
+
 //messages that bot will respond to
-client.on('message', message => {
+client.on('message', async message => {
         //party
         if (message.content === `party?`
          || message.content === `Party?`){
@@ -47,7 +63,7 @@ client.on('message', message => {
             message.channel.send('Fun!');
         }
         //shutup
-        else if (message.content === 'shut up bot'
+         else if (message.content === 'shut up bot'
         ||  message.content === 'Shut up bot'
         ||  message.content === 'Shut up Pinkie'
         ||  message.content === 'shut up Pinkie')
@@ -55,8 +71,39 @@ client.on('message', message => {
             message.react(`842848542002249738`)
             .catch(() => console.error('Failed to load emojis'));
         }
-        
 
+        if (message.content === `${prefix}pic`) {
+
+            const { images } = await fetch('https://derpibooru.org/api/v1/json/search/images?q=pp%2C+safe%2C+cute%2C+solo%2Cscore.gt%3A0&sf=random').then(response => response.json());
+            const [answer] = images;
+    
+        
+            const embedSpoiler = new Discord.MessageEmbed()
+                    .setColor('ed458b')
+                    .setTitle(`${answer.id}`)
+                    .setURL(`https://derpibooru.org/${answer.id}`)
+                    .setImage(answer.representations.large)
+                    .addFields(
+                        { name: 'Score', value: `↑${answer.upvotes} **${answer.score}** ↓${answer.downvotes}\n⭐ ${answer.faves}` },
+                    );
+    
+            if (answer.spoilered === true){
+            
+            message.channel.send(`This pic is rated higher than my filters allow, therefore I spoiler this\n||${embedSpoiler}||`)
+            } else {
+    
+            const embed = new Discord.MessageEmbed()
+                .setColor('ed458b')
+                .setTitle(`${answer.id}`)
+                .setURL(`https://derpibooru.org/${answer.id}`)
+                .setImage(answer.representations.medium)
+                .addFields(
+                    { name: 'Score', value: `↑${answer.upvotes} **${answer.score}** ↓${answer.downvotes}\n⭐ ${answer.faves}` },
+                );
+         message.channel.send(embed);
+                }
+        }
+    
     if (!message.content.startsWith(prefix) || message.author.bot) return;
 
 	const args = message.content.slice(prefix.length).trim().split(/ +/);
@@ -84,6 +131,7 @@ client.on('message', message => {
         }
         return message.channel.send(reply);
     }
+
     //server only command settings
     if (command.guildOnly && message.channel.type === 'dm') {
         return message.channel.send(`Can't do that inside DMs, silly!`);
@@ -93,7 +141,6 @@ client.on('message', message => {
     if (!cooldowns.has(command.name)) {
         cooldowns.set(command.name, new Discord.Collection());
     }
-
 
     const now = Date.now();
     const timestamps = cooldowns.get(command.name);
@@ -112,7 +159,7 @@ timestamps.set(message.author.id, now);
 setTimeout(() => timestamps.delete(message.author.id), cooldownAmount);
 
     try {
-        command.execute(message, args, Discord);
+        command.execute(message, fetch, args, Discord);
     } catch (error) {
         console.error(error);
         message.channel.send(`Oh no! I can't do that!`);
